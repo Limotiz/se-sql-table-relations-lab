@@ -10,10 +10,10 @@ conn = sqlite3.connect('data.sqlite')
 pd.read_sql("""SELECT * FROM sqlite_master""", conn)
 
 # STEP 1
+# STEP 1
 df_boston = pd.read_sql("""
     SELECT e.firstName,
-           e.lastName,
-           e.jobTitle
+           e.lastName
     FROM employees e
     JOIN offices o
         ON e.officeCode = o.officeCode
@@ -56,29 +56,31 @@ df_contacts = pd.read_sql("""
 """, conn)
 
 # STEP 5
-df_payment = pd.read_sql("""
-    SELECT c.contactFirstName,
-           c.contactLastName,
-           p.amount,
-           p.paymentDate
-    FROM customers c
-    JOIN payments p
-        ON c.customerNumber = p.customerNumber
-    ORDER BY CAST(p.amount AS DECIMAL(10,2)) DESC
+df_customers = pd.read_sql("""
+    SELECT o.officeCode,
+           o.city,
+           COUNT(c.customerNumber) AS n_customers
+    FROM offices o
+    JOIN employees e
+        ON o.officeCode = e.officeCode
+    JOIN customers c
+        ON e.employeeNumber = c.salesRepEmployeeNumber
+    GROUP BY o.officeCode, o.city
+    ORDER BY o.officeCode
 """, conn)
 
 # STEP 6
-df_credit = pd.read_sql("""
-    SELECT e.employeeNumber,
-           e.firstName,
-           e.lastName,
-           COUNT(c.customerNumber) AS numcustomers
-    FROM employees e
+df_customers = pd.read_sql("""
+    SELECT o.officeCode,
+           o.city,
+           COUNT(c.customerNumber) AS n_customers
+    FROM offices o
+    JOIN employees e
+        ON o.officeCode = e.officeCode
     JOIN customers c
         ON e.employeeNumber = c.salesRepEmployeeNumber
-    GROUP BY e.employeeNumber, e.firstName, e.lastName
-    HAVING AVG(c.creditLimit) > 90000
-    ORDER BY numcustomers DESC
+    GROUP BY o.officeCode, o.city
+    ORDER BY o.officeCode
 """, conn)
 
 # STEP 7
