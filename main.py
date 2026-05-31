@@ -56,31 +56,31 @@ df_contacts = pd.read_sql("""
 """, conn)
 
 # STEP 5
-df_customers = pd.read_sql("""
-    SELECT o.officeCode,
-           o.city,
-           COUNT(c.customerNumber) AS n_customers
-    FROM offices o
-    JOIN employees e
-        ON o.officeCode = e.officeCode
-    JOIN customers c
-        ON e.employeeNumber = c.salesRepEmployeeNumber
-    GROUP BY o.officeCode, o.city
-    ORDER BY o.officeCode
+# STEP 5
+df_payment = pd.read_sql("""
+    SELECT c.contactFirstName,
+           c.contactLastName,
+           p.amount,
+           p.paymentDate
+    FROM customers c
+    JOIN payments p
+        ON c.customerNumber = p.customerNumber
+    ORDER BY CAST(p.amount AS REAL) DESC
 """, conn)
 
 # STEP 6
-df_customers = pd.read_sql("""
-    SELECT o.officeCode,
-           o.city,
-           COUNT(c.customerNumber) AS n_customers
-    FROM offices o
-    JOIN employees e
-        ON o.officeCode = e.officeCode
+# STEP 6
+df_credit = pd.read_sql("""
+    SELECT e.employeeNumber,
+           e.firstName,
+           e.lastName,
+           COUNT(c.customerNumber) AS numcustomers
+    FROM employees e
     JOIN customers c
         ON e.employeeNumber = c.salesRepEmployeeNumber
-    GROUP BY o.officeCode, o.city
-    ORDER BY o.officeCode
+    GROUP BY e.employeeNumber, e.firstName, e.lastName
+    HAVING AVG(c.creditLimit) > 90000
+    ORDER BY numcustomers DESC
 """, conn)
 
 # STEP 7
@@ -110,6 +110,7 @@ df_total_customers = pd.read_sql("""
 """, conn)
 
 # STEP 9
+# STEP 9
 df_customers = pd.read_sql("""
     SELECT o.officeCode,
            o.city,
@@ -120,11 +121,11 @@ df_customers = pd.read_sql("""
     JOIN customers c
         ON e.employeeNumber = c.salesRepEmployeeNumber
     GROUP BY o.officeCode, o.city
-    ORDER BY n_customers DESC
+    ORDER BY o.officeCode
 """, conn)
 
-# STEP 10
-df_underperforming = pd.read_sql("""
+# STEP 10# STEP 10
+df_under_20 = pd.read_sql("""
     WITH low_performing_products AS (
         SELECT od.productCode
         FROM orderdetails od
@@ -154,4 +155,3 @@ df_underperforming = pd.read_sql("""
     )
     ORDER BY e.employeeNumber
 """, conn)
-conn.close()
